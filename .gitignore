@@ -1,0 +1,16 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*:Zone.Identifier
+*.bak
+*.bak2
+*.gguf
+*.safetensors
+models/
+results/raw/
+*.log
+prometheus-*.tar.gz
+prometheus-*.linux-amd64/

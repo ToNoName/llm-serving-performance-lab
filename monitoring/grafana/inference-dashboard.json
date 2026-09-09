@@ -1,0 +1,645 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "vllm:num_requests_waiting",
+          "refId": "A"
+        }
+      ],
+      "title": "Waiting Requests",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "vllm:num_requests_running",
+          "refId": "A"
+        }
+      ],
+      "title": "Running Requests",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "vllm:kv_cache_usage_perc",
+          "refId": "A"
+        }
+      ],
+      "title": "KV Cache Usage",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(vllm:time_to_first_token_seconds_bucket[30s])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "title": "TTFT (P95)",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "rate(gateway_request_latency_seconds_sum[30s]) / rate(gateway_request_latency_seconds_count[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Gateway Latency (avg)",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "increase(vllm:num_preemptions_total[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Preemptions 30s",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "rate(vllm:generation_tokens_total[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Output Throughput",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(vllm:request_queue_time_seconds_bucket[30s])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Time (P95)",
+      "type": "timeseries",
+      "interval": "1s"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "rate(vllm:request_prefill_time_seconds_sum[30s]) / rate(vllm:request_prefill_time_seconds_count[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Prefill Time (avg)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "rate(vllm:request_prefill_kv_computed_tokens_sum[30s]) / rate(vllm:request_prefill_kv_computed_tokens_count[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Prefill KV Tokens (avg)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 11,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "histogram_quantile(0.95, sum(rate(vllm:request_time_per_output_token_seconds_bucket[30s])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "title": "TPOT (P95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PD8C576611E590FFA"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 12,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD8C576611E590FFA"
+          },
+          "expr": "rate(vllm:request_decode_time_seconds_sum[30s]) / rate(vllm:request_decode_time_seconds_count[30s])",
+          "refId": "A"
+        }
+      ],
+      "title": "Decode Time (avg)",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "inference",
+    "vllm",
+    "gateway"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Inference Monitor",
+  "uid": "inference-monitor",
+  "version": 1
+}

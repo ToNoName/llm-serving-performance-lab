@@ -1,0 +1,108 @@
+# Reference topology. Adjust MODEL_DIR, image versions, and GPU allocation first.
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway
+    networks: [inference-net]
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    environment:
+      VLLM_BACKEND_URL: ${VLLM_BACKEND_URL:-http://vllm:8001/v1/chat/completions}
+      LLAMA_BACKEND_URL: ${LLAMA_BACKEND_URL:-http://llama:8002/v1/chat/completions}
+      VLLM_SERVED_MODEL: ${VLLM_SERVED_MODEL:-qwen}
+      LLAMA_SERVED_MODEL: ${LLAMA_SERVED_MODEL:-qwen2.5-7b-instruct-Q4_K_M}
+      TOKEN_THRESHOLD: ${TOKEN_THRESHOLD:-512}
+      BACKEND_MODE: ${BACKEND_MODE:-vllm}
+      REQUEST_TIMEOUT: ${REQUEST_TIMEOUT:-60}
+    networks: [inference-net]
+
+  vllm:
+    image: vllm/vllm-openai:v0.22.1
+    ports:
+      - "${VLLM_PORT:-8001}:8001"
+    volumes:
+      - ${MODEL_DIR:?Set MODEL_DIR in .env}:/models:ro
+    command:
+      - --model
+      - ${VLLM_MODEL_PATH:-/models/Qwen2.5-7B-Instruct-AWQ-Int4}
+      - --served-model-name
+      - qwen
+      - --gpu-memory-utilization
+      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.85}
+      - --max-model-len
+      - ${VLLM_MAX_MODEL_LEN:-32768}
+      - --trust-remote-code
+      - --port
+      - "8001"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks: [inference-net]
+    profiles: [vllm]
+
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:full-cuda
+    ports:
+      - "${LLAMA_PORT:-8002}:8002"
+    volumes:
+      - ${MODEL_DIR:?Set MODEL_DIR in .env}:/models:ro
+    command:
+      - --server
+      - -m
+      - ${LLAMA_MODEL_PATH:-/models/qwen2.5-7b-instruct-Q4_K_M.gguf}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8002"
+      - --n-gpu-layers
+      - ${LLAMA_GPU_LAYERS:-99}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks: [inference-net]
+    profiles: [llama]
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks: [inference-net]
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+    volumes:
+      - ../monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - ../monitoring/grafana/dashboard-provider.yml:/etc/grafana/provisioning/dashboards/providers.yml:ro
+      - ../monitoring/grafana/inference-dashboard.json:/etc/grafana/provisioning/dashboards/inference-dashboard.json:ro
+    depends_on:
+      - prometheus
+    networks: [inference-net]
+
+networks:
+  inference-net:
+    driver: bridge
