@@ -4,7 +4,7 @@
 
 ## 核心成果
 
-- 使用 vLLM Native Metrics 将 TTFT 拆解为 Queue 与 Prefill，避免依赖单一端到端延迟判断瓶颈。
+- 使用 vLLM Native Metrics 对照 TTFT、Queue 与 Prefill 的变化，避免依赖单一端到端延迟判断瓶颈。
 - 在相同 c32 workload 下将 `max_num_seqs` 从 32 降至 8，Queue 从约 1.08 s 增至 5.43 s，验证 Scheduler admission capacity 对首 token 延迟的影响。
 - 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 仍约为 1.67 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
@@ -110,7 +110,7 @@ cp .env.example .env
 ./scripts/start_gateway.sh
 ```
 
-运行 E4 示例需要可用的 vLLM 后端和 tokenizer：
+运行 E4 示例需要 GPU 环境中已安装 vLLM 0.22.1，以及与历史实验一致的权重和 tokenizer；安装与配置边界见复现指南：
 
 ```bash
 pip install -r requirements/benchmark.txt
@@ -131,6 +131,8 @@ export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
 
 ## 文档与数据
 
+- [数字、配置与历史来源映射](docs/EVIDENCE.md)
+- [验证记录与未验证范围](docs/VALIDATION.md)
 - [E1–E4 性能报告](docs/PERFORMANCE_REPORT.md)
 - [vLLM V1 系统架构与请求链路](docs/VLLM_SYSTEM_ARCHITECTURE.md)
 - [实验复现指南](docs/REPRODUCTION.md)

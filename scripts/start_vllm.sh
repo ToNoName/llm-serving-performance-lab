@@ -26,6 +26,9 @@ args=(
   --max-num-seqs "$max_num_seqs"
   --max-model-len 32768
   --trust-remote-code
+  --no-enable-prefix-caching
+  --enable-chunked-prefill
+  --max-num-batched-tokens 2048
 )
 
 echo "vLLM version: $(vllm --version)"

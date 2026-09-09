@@ -8,7 +8,8 @@ E1–E4 使用控制变量方法分析单机 vLLM Serving 中四类问题：并�
 
 ```text
 GPU: NVIDIA RTX 4090D（AutoDL）
-Model: Qwen2.5-7B-Instruct AWQ Int4
+Model: Qwen2.5-7B-Instruct AWQ Int4（历史目录后缀 -lcm）
+Runtime quantization: compressed-tensors / Marlin
 vLLM: 0.22.1
 gpu_memory_utilization: 0.85（E3B 除外）
 max_num_seqs: 32（E3A 除外）
@@ -82,6 +83,8 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 ![E3A scheduler](../results/figures/e3a-scheduler-capacity.png)
 
 ### Chunked Prefill 补充观察
+
+此节为历史补充分析，不纳入当前 E1–E4 主实验脚本的复现范围；来源见 [证据映射](EVIDENCE.md)。
 
 在本实验的 vLLM 0.22.1 配置中，没有显式设置 `max_num_batched_tokens`：
 

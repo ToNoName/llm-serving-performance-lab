@@ -37,6 +37,10 @@ E3B：
 ./scripts/start_vllm.sh e3b-mem035
 ```
 
+在独立的 GPU 环境中安装 `vllm==0.22.1`（例如 `pip install vllm==0.22.1`），并确认模型权重及 tokenizer 与历史实验一致。Gateway/benchmark requirements 不安装推理引擎。
+
+启动脚本显式关闭 Prefix Caching、开启 Chunked Prefill，并设置 `max_num_batched_tokens=2048`。该预算依据历史分析记录；原始实验使用版本默认值，重跑时还需核对启动日志的最终配置。新脚本尚未在 4090D 完整重跑。
+
 每次改变服务配置前先停止旧的 vLLM 进程。脚本打印 vLLM 版本、GPU 信息和完整启动命令。
 
 ## 运行实验
@@ -120,6 +124,8 @@ E1–E4 默认直连 vLLM，以减少 Gateway connection pool 对 workload 的�
 cp .env.example .env
 # 编辑 .env：至少设置 MODEL_DIR、模型容器路径和 Grafana 密码
 ```
+
+`VLLM_BACKEND_URL`/`LLAMA_BACKEND_URL` 用于直接在宿主机运行 Gateway；Compose 使用独立的 `COMPOSE_VLLM_BACKEND_URL`/`COMPOSE_LLAMA_BACKEND_URL`，默认指向服务名。容器中的 `localhost` 不能用于访问另一个容器。
 
 `MODEL_DIR` 是宿主机上的模型目录；`VLLM_MODEL_PATH` 和 `LLAMA_MODEL_PATH` 是该目录挂载到容器 `/models` 后的路径。单后端部署时，`BACKEND_MODE` 必须与启用的 profile 一致。
 

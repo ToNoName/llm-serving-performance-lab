@@ -17,8 +17,8 @@ services:
     ports:
       - "${GATEWAY_PORT:-8000}:8000"
     environment:
-      VLLM_BACKEND_URL: ${VLLM_BACKEND_URL:-http://vllm:8001/v1/chat/completions}
-      LLAMA_BACKEND_URL: ${LLAMA_BACKEND_URL:-http://llama:8002/v1/chat/completions}
+      VLLM_BACKEND_URL: ${COMPOSE_VLLM_BACKEND_URL:-http://vllm:8001/v1/chat/completions}
+      LLAMA_BACKEND_URL: ${COMPOSE_LLAMA_BACKEND_URL:-http://llama:8002/v1/chat/completions}
       VLLM_SERVED_MODEL: ${VLLM_SERVED_MODEL:-qwen}
       LLAMA_SERVED_MODEL: ${LLAMA_SERVED_MODEL:-qwen2.5-7b-instruct-Q4_K_M}
       TOKEN_THRESHOLD: ${TOKEN_THRESHOLD:-512}

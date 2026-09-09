@@ -1,7 +1,8 @@
 # vLLM V1 System Architecture
 
 ```text
-分析版本：vLLM 0.22.1
+源码阅读版本：vLLM 0.21.0
+性能实验版本：vLLM 0.22.1（本文未逐函数重新核对该版本）
 Engine：V1
 执行路径：UniprocExecutor
 范围：请求接入、Scheduler、KV Cache、GPU 执行和输出
