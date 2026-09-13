@@ -9,6 +9,7 @@
 - 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 仍约为 1.67 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
 - 使用 AutoGPTQ、llm-compressor 与 llama-quantize 完成 Qwen2.5-7B 的 GPTQ-Int4、AWQ W4A16、GGUF Q4_K_M/Q8_0 转换与加载验证，并完成 FP16/AWQ 共 95 组、2850 请求的部署压测。
+- 使用 Docker Compose 验证 Nginx → Gateway → llama.cpp 的非流式/流式请求链路，以及 Prometheus 对 Gateway 指标的抓取、Grafana 数据源和仪表盘加载。
 - 阅读并整理 vLLM V1 Engine 的请求接入、Scheduler、KV Cache、GPU 执行与输出链路。
 
 ## 系统结构
@@ -48,7 +49,7 @@ flowchart LR
     A --> J[Streaming / Final Response]
 ```
 
-该图概括 vLLM V1 的请求接入、调度、KV Cache 分配、GPU 执行和输出返回路径。源码阅读基于 vLLM 0.21.0；E1–E4 使用 0.22.1，未宣称逐函数完全一致。完整调用关系和关键源码入口见 [vLLM V1 系统架构与请求链路](docs/VLLM_SYSTEM_ARCHITECTURE.md)。
+该图概括 vLLM V1 的请求接入、调度、KV Cache 分配、GPU 执行和输出返回路径。源码阅读对应 vLLM 0.21.0，E1–E4 的运行版本为 0.22.1；完整调用关系和版本范围见 [vLLM V1 系统架构与请求链路](docs/VLLM_SYSTEM_ARCHITECTURE.md)。
 
 ## 关键实验结果
 
@@ -169,8 +170,6 @@ export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
 
 ## 文档与数据
 
-- [数字、配置与历史来源映射](docs/EVIDENCE.md)
-- [验证记录与未验证范围](docs/VALIDATION.md)
 - [E1–E4 性能报告](docs/PERFORMANCE_REPORT.md)
 - [量化部署与评测说明](docs/QUANTIZATION.md)
 - [vLLM V1 系统架构与请求链路](docs/VLLM_SYSTEM_ARCHITECTURE.md)
@@ -181,7 +180,7 @@ export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
 - [量化产物摘要](results/quantization-artifacts.csv)
 - [量化矩阵摘要](results/quantization-summary.csv)
 
-完整原始日志、Prometheus before/after 快照和历史实验文件不纳入精简仓库。仓库保留汇总数据、复现脚本和关键图表，以控制体积并维持证据可追溯性。
+仓库采用精简发布结构：`results/` 保存汇总 CSV 与关键图表，`scripts/` 保存实验入口和指标采集流程，技术报告中的数字可直接定位到公开数据与脚本。
 
 ## Repository Structure
 

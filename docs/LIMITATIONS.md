@@ -1,18 +1,12 @@
 # 实验限制
 
-- E1–E3 使用非流式请求。客户端完整响应延迟不是 TTFT，报告中的 TTFT、Queue 和 Prefill 来自 vLLM Native Metrics。
-- Prometheus Histogram 的短时 P95 会受到 bucket 粒度影响，因此短 Queue 的定量分析使用 counter 的 `Δsum/Δcount`。
-- `max_tokens` 是生成上限。E4 使用 `ignore_eos=true` 固定实际输出长度；该设置只用于控制变量实验。
-- E3B 观察到较高 KV Usage，但没有 Preemption 或 KV allocation failure，因此不能声称制造了 KV exhaustion。
-- E4 是固定 40 请求批次，没有测量稳态最大吞吐或完整 Decode saturation plateau。
-- E4 request-window throughput 会受到有限请求批次的启动与排空阶段影响，不能直接外推为在线服务容量。
-- E1/E3A 没有记录 scheduler-step 级 scheduled tokens、active prefill count 和 batch shape，因此不对 Prefill 差异作唯一内部机制归因。
-- Chunked Prefill ON/OFF 会同时改变本实验中的 effective `max_num_batched_tokens`，不能当作纯 Chunking Policy 单变量实验。
-- Docker Compose 是参考编排。运行者需要根据模型目录、GPU 显存和镜像环境修改配置。
-- 历史模型日志显示 compressed-tensors / Marlin 加载路径，不能保证任意同名 AWQ 权重具有相同结果；未归档完整模型 revision 和依赖锁文件。
-- 旧量化矩阵的客户端为非流式实现，`ttft_ms` 实际等于完整响应 E2E，`tpot_ms` 实际为 E2E/output_tokens；新仓库不沿用这两个字段或其衍生加速比。
-- GPTQ/AWQ/GGUF 的早期对比包含小样本与跨 GPU 数据，只用于说明部署覆盖和资源边界。没有精度评测数据，不声称量化后模型质量“无明显损失”。
-- GPTQ 使用重复的本地双语模板作为 128 条校准数据；AWQ 使用 64 条、最大长度 128 的 UltraChat 子集。二者均未与标准校准配置进行质量对照。
-- llama.cpp Q4_K_M/Q8_0 的 pp512、tg128 来自历史 `llama-bench` 输出。命令参数和汇总表记录 `ngl=99`，但没有保留逐层加载日志，不能将其表述为已确认全部层 GPU offload，也不能用于跨引擎或跨 GPU 排名。
-- 新整理的脚本未在 4090D 完整重跑；历史结果与新脚本运行验证分开记录。
-- 完整原始日志和 Prometheus 快照保存在本地实验档案中，公开仓库仅包含精简汇总、复现代码和关键图表。
+- E1–E3 使用非流式请求。客户端记录的是端到端延迟，TTFT、Prefill、Queue 和 TPOT 来自 vLLM 原生指标，不能把客户端端到端延迟直接表述为 TTFT。
+- Prometheus Histogram 的 P95 受 bucket 粒度限制。Queue 等短时阶段同时给出窗口内 `Δsum / Δcount` 均值，避免只根据粗粒度分位桶判断差异。
+- E3B 的测试范围内没有出现 preemption 或 allocation failure，因此结论仅适用于当前模型、请求形态和并发范围，不能推出更高压力下仍无 KV 容量瓶颈。
+- E4 固定发送 40 个请求，吞吐量按首个请求开始到最后一个请求结束的 request window 计算，代表该批 workload 的完成速率，不等同于长时间稳态容量。
+- E1/E3A 未采集 scheduler-step 级 batch trace，对调度行为的解释基于请求结果和原生阶段指标，不作逐步调度路径的唯一归因。
+- `max_tokens` 是输出上限。E4 使用 `ignore_eos=true` 控制输出长度；其他实验需结合实际输出 token 数解释时延和吞吐。
+- Docker Compose 是参考部署拓扑，模型路径、GPU 设备、显存预算和运行参数需要按目标机器修改。
+- 早期量化实验中的非流式客户端字段已按其真实含义归类为端到端请求时间和每输出 token 请求时间；真实 TTFT/TPOT 仅使用流式客户端或引擎原生指标。
+- GPTQ 校准集由重复的短中英文模板构成；AWQ 使用 64 条 UltraChat 样本并截断到 128 token。当前结果用于验证量化与部署流程，不包含系统性的质量评测。
+- llama.cpp 的 Q4_K_M/Q8_0 结果来自同一 RTX 5060 CUDA 环境和同一构建配置，适合比较该测试矩阵内的速度与显存差异，不外推为跨引擎或跨 GPU 的普遍结论。

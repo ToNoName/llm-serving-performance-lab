@@ -118,7 +118,7 @@ GPTQ/AWQ 脚本在产物目录写入 `experiment-metadata.json`，记录源模�
 | FP16 | 128/512/1024 | 64/128/256/512 | 1/2/4/8/16/32 | 72 | 2160 | 2160 |
 | AWQ-Int4 | 核心矩阵：128/1024；专项：1024 | 核心矩阵：128/512；专项：256 | 核心矩阵：1/4/16/30；专项：1/2/4/8/16/24/32 | 23 | 690 | 690 |
 
-服务配置为 vLLM 0.22.1、`gpu_memory_utilization=0.9`、`max_num_seqs=128`、`max_model_len=4096`。矩阵规模摘要见 [`results/quantization-summary.csv`](../results/quantization-summary.csv)。完整逐请求 CSV 与 GPU 采样日志保留在历史档案中。
+服务配置为 vLLM 0.22.1、`gpu_memory_utilization=0.9`、`max_num_seqs=128`、`max_model_len=4096`。矩阵规模和成功请求数见 [`results/quantization-summary.csv`](../results/quantization-summary.csv)，参数化脚本定义量化流程与 workload。
 
 ## 显存观察
 

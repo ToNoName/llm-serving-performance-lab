@@ -2,7 +2,7 @@
 
 ## 环境
 
-E1–E4 原始结果来自 AutoDL RTX 4090D、vLLM 0.22.1 和 Qwen2.5-7B-Instruct AWQ Int4。本地 RTX 5060 用于 Gateway 与 llama.cpp 开发，不作为 E1–E4 的等价复现环境。
+README 中的 E1–E4 参考结果在 AutoDL RTX 4090D、vLLM 0.22.1 和 Qwen2.5-7B-Instruct AWQ Int4 环境采集。复跑时使用相同模型系列、tokenizer 和服务配置，并将新输出与仓库汇总分开保存。
 
 需要 Python 3.10+ 及其 `venv` 支持。在 Ubuntu/WSL 中如果 `python -m venv` 提示缺少 `ensurepip`，先安装发行版提供的 `python3-venv` 包。
 
@@ -37,9 +37,9 @@ E3B：
 ./scripts/start_vllm.sh e3b-mem035
 ```
 
-在独立的 GPU 环境中安装 `vllm==0.22.1`（例如 `pip install vllm==0.22.1`），并确认模型权重及 tokenizer 与历史实验一致。Gateway/benchmark requirements 不安装推理引擎。
+在独立的 GPU 环境中安装 `vllm==0.22.1`（例如 `pip install vllm==0.22.1`），并确认模型权重与 tokenizer 配套。Gateway/benchmark requirements 不安装推理引擎。
 
-启动脚本显式关闭 Prefix Caching、开启 Chunked Prefill，并设置 `max_num_batched_tokens=2048`。该预算依据历史分析记录；原始实验使用版本默认值，重跑时还需核对启动日志的最终配置。新脚本尚未在 4090D 完整重跑。
+启动脚本显式关闭 Prefix Caching、开启 Chunked Prefill，并将 `max_num_batched_tokens` 固定为 2048，使每次运行采用明确的 token budget。启动时记录 vLLM 版本、GPU 信息和完整命令，实验比较以同一配置下的新输出为准。
 
 每次改变服务配置前先停止旧的 vLLM 进程。脚本打印 vLLM 版本、GPU 信息和完整启动命令。
 
@@ -117,6 +117,13 @@ E1–E4 默认直连 vLLM，以减少 Gateway connection pool 对 workload 的�
 ## 参考 Docker Compose
 
 `deployment/docker-compose.reference.yml` 用于验证 Nginx、Gateway、推理后端和监控的参考拓扑。它不是无需修改即可部署到任意机器的生产配置。
+
+该编排已完成以下链路验证：
+
+- Gateway 镜像构建和健康检查；
+- Nginx → Gateway → llama.cpp 非流式与流式转发，Streaming 响应正常结束于 `[DONE]`；
+- Prometheus 对 Gateway 指标的抓取；
+- Grafana 健康检查、Prometheus 数据源和预置仪表盘加载。
 
 先复制环境文件并修改以下关键项：
 

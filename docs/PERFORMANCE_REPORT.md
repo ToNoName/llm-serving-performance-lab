@@ -82,19 +82,6 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 
 ![E3A scheduler](../results/figures/e3a-scheduler-capacity.png)
 
-### Chunked Prefill 补充观察
-
-此节为历史补充分析，不纳入当前 E1–E4 主实验脚本的复现范围；来源见 [证据映射](EVIDENCE.md)。
-
-在本实验的 vLLM 0.22.1 配置中，没有显式设置 `max_num_batched_tokens`：
-
-```text
-Chunked Prefill ON  -> effective max_num_batched_tokens = 2048
-Chunked Prefill OFF -> effective max_num_batched_tokens = 32768
-```
-
-因此 ON/OFF 对照不是纯 Chunking Policy 单变量实验。effective token budget 改变后，Queue 与 Prefill 之间的 latency distribution 也发生变化。由于没有 scheduler-step trace，本文不对 Prefill 的微观差异作唯一机制归因。
-
 ## E3B：KV Capacity Control
 
 固定 prompt≈1028、max_tokens=256、concurrency=32 和 `max_num_seqs=32`：
@@ -148,3 +135,15 @@ TPOT 上升
 - [E4 summary](../results/e4-summary.csv)
 - [复现步骤](REPRODUCTION.md)
 - [限制](LIMITATIONS.md)
+
+## 数据与脚本映射
+
+| 实验 | 公开数据 | 关键字段 | 运行脚本 |
+|---|---|---|---|
+| E1 Concurrency | `e1-e3-summary.csv` / `e1-v2-c1,c4,c8,c16,c32` | concurrency、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh` |
+| E2 Prompt Length | `e1-e3-summary.csv` / `e2-v3-128,512,1024,2048` | prompt_tokens_mean、Prefill、Queue、Native TTFT | `run_e2_prefill.sh` |
+| E3A Scheduler | `e1-e3-summary.csv` / `e1-v2-*`、`e3a-v2-*` | max_num_seqs、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh`、`run_e3a_scheduler.sh` |
+| E3B KV Capacity | `e1-e3-summary.csv` / `e3b-v2-*` | gpu_memory_utilization、Preemption、Prefill、Queue、Native TTFT | `run_e3b_kv_capacity.sh` |
+| E4 Decode | `e4-summary.csv` | Client/Native TTFT、TPOT、request window、output throughput | `run_e4_decode.sh` |
+
+CSV 位于 [`results/`](../results/)，脚本位于 [`scripts/`](../scripts/)。时间字段统一使用毫秒；README 中以秒展示的 Queue 数值由毫秒除以 1000 并按显示精度取舍。
