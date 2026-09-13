@@ -17,6 +17,7 @@ README/性能报告中的性能数字按下表定位。CSV 时间列均为毫秒
 | E4 输入129、输出512、40请求 | e4-summary.csv | prompt_tokens,output_tokens_per_request,successful_requests,total_requests | run_e4_decode.sh |
 | E4 吞吐 | e4-summary.csv | successful_requests × output_tokens_per_request / request_window_seconds | run_e4_decode.sh |
 | FP16/AWQ 量化矩阵规模 | quantization-summary.csv | groups,requests_per_group,total_requests,successful_requests | 历史 w6_fp16_matrix.sh / w6_awq_matrix.sh |
+| GPTQ/AWQ/GGUF 量化产物与 llama-bench | quantization-artifacts.csv | artifact_size、quantization_time、pp512、tg128 | 历史量化实战记录与 W3 报告 |
 
 以上 CSV 均位于 [results](../results/)。E1–E3 的 19 行保留字段已逐字段与历史 summary 比较；E4 的 5 行延迟列与历史 full summary 比较，请求窗口取各 case 日志中的 wall_time_s，吞吐重新计算。原始 full summary 的 aggregate_output_tps 使用外层时间，不沿用该值。
 
@@ -28,6 +29,7 @@ README/性能报告中的性能数字按下表定位。CSV 时间列均为毫秒
 - 架构阅读：`docs/W7/vllm system-architecture.md`，原稿明确标注 0.21.0。迁移文档不宣称已逐函数核对 0.22.1。
 - 量化矩阵：旧项目 `docs/W6/data/results_fp16/` 中 72 个结果组、`docs/W6/data/results_awq/` 中 23 个结果组；每组 30 请求，共 2850 条成功记录。公开仓库仅保留汇总和来源文件指纹。
 - 量化探索：旧项目 `docs/W3/quantization-comparison.md` 与 `docs/W6/report.md`。早期非流式 benchmark 将 E2E 错标为 TTFT，并用 E2E/output_tokens 计算所谓 TPOT，因此这些字段和由其导出的加速比不进入新仓库结论。
+- 量化过程：历史记录保存了 GPTQ/AWQ 参数化脚本、量化完成输出、GGUF 转换日志与 llama-bench 汇总输出。llama-bench 记录 CUDA backend、GPU 型号、VRAM、build 和 `ngl=99`，但未保留逐层 offload 日志。当前仓库将其整理为参考脚本和 `quantization-artifacts.csv`；未迁移重复的安装日志、完整控制台输出和个人绝对路径。
 - 文件指纹见 [source-manifest.json](../results/source-manifest.json)。指纹用于识别作者保存的档案，不代替公开原始证据。
 
 ## 配置与结论边界

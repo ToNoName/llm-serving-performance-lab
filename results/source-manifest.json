@@ -73,5 +73,10 @@
     "archive": "llm-inference-platform",
     "relative_path": "docs/W6/report.md",
     "sha256": "c2b8f40adb8fed97f42a0081546b086643fcf48b7a11fdd89bd8828c69286cf3"
+  },
+  {
+    "archive": "quantization-lab-notes",
+    "relative_path": "quantization-runbook.md",
+    "sha256": "b923a1b3bc672fc8bca0d22671cddde045adc6aff37d6ec7dd318503567af7a2"
   }
 ]

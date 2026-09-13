@@ -8,7 +8,7 @@
 - 在相同 c32 workload 下将 `max_num_seqs` 从 32 降至 8，Queue 从约 1.08 s 增至 5.43 s，验证 Scheduler admission capacity 对首 token 延迟的影响。
 - 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 仍约为 1.67 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
-- 在 RTX 4090D 上完成 Qwen2.5-7B FP16 与 AWQ-Int4 的 95 组、2850 请求部署压测，并探索 GPTQ、AWQ 与 GGUF 格式在 vLLM/llama.cpp 中的部署边界。
+- 使用 AutoGPTQ、llm-compressor 与 llama-quantize 完成 Qwen2.5-7B 的 GPTQ-Int4、AWQ W4A16、GGUF Q4_K_M/Q8_0 转换与加载验证，并完成 FP16/AWQ 共 95 组、2850 请求的部署压测。
 - 阅读并整理 vLLM V1 Engine 的请求接入、Scheduler、KV Cache、GPU 执行与输出链路。
 
 ## 系统结构
@@ -33,11 +33,14 @@ flowchart LR
     A[OpenAI API<br/>OpenAIServingChat] --> B[AsyncLLM]
     B --> C[EngineCoreProc]
     C --> D[Scheduler]
-    D <--> E[KVCacheManager]
-    D --> F[Executor / Worker]
+    D --> E[KVCacheManager]
+    E --> D
+    D --> C
+    C --> F[Executor / Worker]
     F --> G[GPUModelRunner]
     G --> H[GPU Forward / Sampling]
-    H --> F
+    H --> G
+    G --> F
     F --> C
     C --> B
     B --> I[OutputProcessor]
@@ -103,16 +106,16 @@ TTFT 的新增部分主要累积在 Queue，而 Prefill 没有同步恶化。该
 
 ## 量化模型部署与评测
 
-项目历史阶段覆盖 FP16、GPTQ-Int4、AWQ-Int4、GGUF Q4_K_M 与 Q8_0，重点是量化模型的转换/加载、引擎兼容性、显存约束和服务性能评测，不将其表述为量化算法或 CUDA Kernel 研发。
+量化实验覆盖从 FP16 权重到 GPTQ、AWQ 和 GGUF 产物的生成、加载与推理验证。GPTQ/AWQ 使用校准数据完成 W4A16 权重量化；GGUF 先由 Hugging Face 权重转换为 FP16 GGUF，再由 llama-quantize 生成 Q4_K_M 与 Q8_0。
 
-| 范围 | 引擎与环境 | 可公开结论 |
+| 产物 | 工具与关键配置 | 结果 |
 |---|---|---|
-| FP16：72 组、2160 请求 | vLLM 0.22.1 / RTX 4090D | 与 AWQ 共享部分 workload，可比较非流式 E2E 和 request output rate |
-| AWQ-Int4：23 组、690 请求 | vLLM 0.22.1 / RTX 4090D | 验证 INT4 权重加载、Marlin 执行路径与并发压测流程 |
-| GPTQ / AWQ 小样本探索 | vLLM / RTX 4090D | 用于理解格式、显存预分配和部署差异，不作为主性能结论 |
-| GGUF Q4_K_M / Q8_0 | llama.cpp / RTX 5060 | 用于本地 8 GB 显存部署验证，不与 4090D 速度直接比较 |
+| GPTQ-Int4 | AutoGPTQ，4 bit、group_size=128、desc_act=true、sym=true | 5.21 GB，量化耗时 12.5 min |
+| AWQ W4A16 | llm-compressor，W4A16_ASYM、64 条 UltraChat 校准样本、max length=128 | 5.20 GB，量化耗时 1.5 min |
+| GGUF Q4_K_M | llama-quantize，4.91 BPW | 4.36 GiB；历史 llama-bench 记录 tg128=77.20±1.51 tok/s |
+| GGUF Q8_0 | llama-quantize，8.50 BPW | 7.54 GiB；历史 llama-bench 记录 tg128=45.18±0.41 tok/s |
 
-FP16 与 AWQ 矩阵共 95 组、2850 个成功请求。历史客户端是非流式实现，不能测量真实 TTFT/TPOT，因此旧报告中的同名字段不迁移；E1–E4 的 TTFT/TPOT 仍只采用 Native Metrics 或 Streaming Client。范围、证据和修正说明见 [量化部署与评测说明](docs/QUANTIZATION.md)及[量化矩阵摘要](results/quantization-summary.csv)。
+在 RTX 4090D 上，FP16 矩阵包含 72 组、2160 请求，AWQ-Int4 矩阵包含 23 组、690 请求，均无失败记录。量化矩阵记录非流式 E2E 与 request output rate；TTFT/TPOT 分析采用 E1–E4 的 vLLM Native Metrics 和 Streaming Client。GGUF 部分保留 CUDA 环境下的模型转换、加载与 llama-bench 结果。完整方法和数据见 [量化部署与评测](docs/QUANTIZATION.md)、[量化产物摘要](results/quantization-artifacts.csv)和[量化矩阵摘要](results/quantization-summary.csv)。
 
 ## 实验环境边界
 
@@ -175,9 +178,10 @@ export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
 - [实验限制](docs/LIMITATIONS.md)
 - [E1–E3 汇总数据](results/e1-e3-summary.csv)
 - [E4 汇总数据](results/e4-summary.csv)
+- [量化产物摘要](results/quantization-artifacts.csv)
 - [量化矩阵摘要](results/quantization-summary.csv)
 
-完整原始日志、Prometheus before/after 快照和历史实验文件不放入求职展示仓库。仓库保留汇总数据、复现脚本和关键图表，以控制体积并维持证据可追溯性。
+完整原始日志、Prometheus before/after 快照和历史实验文件不纳入精简仓库。仓库保留汇总数据、复现脚本和关键图表，以控制体积并维持证据可追溯性。
 
 ## Repository Structure
 
