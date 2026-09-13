@@ -76,6 +76,18 @@ E4 使用 baseline profile：
 
 默认原始输出写入 `results/raw/`，该目录被 Git 忽略。E1–E3 每个 case 先单独完成一次 warmup，再抓取 before 快照；正式请求关闭内部 warmup，并在完成后抓取 after 快照，最后通过 `summarize_metrics.py` 计算 Native metric 差分。这样 Native Metrics 的请求计数与正式请求 CSV 保持一致。
 
+## 已验证的 vLLM 与监控链路
+
+当前脚本已在 RTX 4090D、vLLM 0.22.1 和 Qwen2.5-7B-Instruct AWQ Int4 环境完成以下验证：
+
+- vLLM `/health`、`/v1/models`、非流式请求、Streaming 请求和 `[DONE]` 结束事件；
+- TTFT、Queue、Prefill、TPOT、Running/Waiting、KV Usage、Generation Tokens 和 Preemption 等 Native Metrics；
+- Gateway → vLLM 的非流式与 Streaming 转发、后端健康检查、trace ID、结构化日志和 Prometheus 指标；
+- Prometheus 的 Gateway/vLLM targets 均为 `up`；
+- Grafana 成功加载预置 Prometheus 数据源和 `Inference Monitor`，12 个面板的 PromQL 均能返回时序数据。
+
+仓库中的 Prometheus 配置使用 Compose 服务名 `gateway:8000` 和 `vllm:8001`。以原生进程运行 Prometheus 时，需要将 targets 改为 `localhost:8000` 和 `localhost:8001`；Grafana datasource 同理改为实际 Prometheus 地址。
+
 ## 单独运行 benchmark
 
 非流式 workload：

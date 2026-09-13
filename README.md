@@ -10,6 +10,7 @@
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
 - 使用 AutoGPTQ、llm-compressor 与 llama-quantize 完成 Qwen2.5-7B 的 GPTQ-Int4、AWQ W4A16、GGUF Q4_K_M/Q8_0 转换与加载验证，并完成 FP16/AWQ 共 95 组、2850 请求的部署压测。
 - 使用 Docker Compose 验证 Nginx → Gateway → llama.cpp 的非流式/流式请求链路，以及 Prometheus 对 Gateway 指标的抓取、Grafana 数据源和仪表盘加载。
+- 在 RTX 4090D 上验证 Gateway → vLLM 非流式/流式转发、关键 Native Metrics、Prometheus 双 target 抓取，以及 Grafana 12 个面板的 PromQL 查询。
 - 阅读并整理 vLLM V1 Engine 的请求接入、Scheduler、KV Cache、GPU 执行与输出链路。
 
 ## 系统结构
