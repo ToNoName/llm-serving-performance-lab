@@ -53,5 +53,25 @@
     "archive": "llm-inference-platformV3",
     "relative_path": "monitoring/e4/e4-c32.log",
     "sha256": "d0fd75ba140952c0aab15c3c8c91829e6ec06002945651383cce739075de5b98"
+  },
+  {
+    "archive": "llm-inference-platform",
+    "relative_path": "scripts/w6_fp16_matrix.sh",
+    "sha256": "bf9b4bac31c7ad2c6e1d16dc6c7ec0aca45585ba71aae6350fb7cf4602d521f6"
+  },
+  {
+    "archive": "llm-inference-platform",
+    "relative_path": "scripts/w6_awq_matrix.sh",
+    "sha256": "2afc3fc99a670774d790a524b677f6c62102036f2150fba685ad218bb3ec0580"
+  },
+  {
+    "archive": "llm-inference-platform",
+    "relative_path": "docs/W3/quantization-comparison.md",
+    "sha256": "e81bab7abd33e767469fd3f7cd4f1ad311ec1b5039ad27ffc136c40cb5addb35"
+  },
+  {
+    "archive": "llm-inference-platform",
+    "relative_path": "docs/W6/report.md",
+    "sha256": "c2b8f40adb8fed97f42a0081546b086643fcf48b7a11fdd89bd8828c69286cf3"
   }
 ]

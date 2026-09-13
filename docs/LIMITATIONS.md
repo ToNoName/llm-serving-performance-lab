@@ -10,5 +10,7 @@
 - Chunked Prefill ON/OFF 会同时改变本实验中的 effective `max_num_batched_tokens`，不能当作纯 Chunking Policy 单变量实验。
 - Docker Compose 是参考编排。运行者需要根据模型目录、GPU 显存和镜像环境修改配置。
 - 历史模型日志显示 compressed-tensors / Marlin 加载路径，不能保证任意同名 AWQ 权重具有相同结果；未归档完整模型 revision 和依赖锁文件。
+- 旧量化矩阵的客户端为非流式实现，`ttft_ms` 实际等于完整响应 E2E，`tpot_ms` 实际为 E2E/output_tokens；新仓库不沿用这两个字段或其衍生加速比。
+- GPTQ/AWQ/GGUF 的早期对比包含小样本与跨 GPU 数据，只用于说明部署覆盖和资源边界。没有精度评测数据，不声称量化后模型质量“无明显损失”。
 - 新整理的脚本未在 4090D 完整重跑；历史结果与新脚本运行验证分开记录。
 - 完整原始日志和 Prometheus 快照保存在本地实验档案中，公开仓库仅包含精简汇总、复现代码和关键图表。
