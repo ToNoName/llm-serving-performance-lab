@@ -39,7 +39,7 @@ E3B：
 
 在独立的 GPU 环境中安装 `vllm==0.22.1`（例如 `pip install vllm==0.22.1`），并确认模型权重与 tokenizer 配套。Gateway/benchmark requirements 不安装推理引擎。
 
-启动脚本显式关闭 Prefix Caching、开启 Chunked Prefill，并将 `max_num_batched_tokens` 固定为 2048，使每次运行采用明确的 token budget。启动时记录 vLLM 版本、GPU 信息和完整命令，实验比较以同一配置下的新输出为准。
+项目初期的 E1–E4 运行没有主动传入 `max_num_batched_tokens`，vLLM 0.22.1 在当前 Chunked Prefill 配置下采用的有效值为 2048。当前启动脚本显式关闭 Prefix Caching、开启 Chunked Prefill，并固定这一已观察到的有效默认值，目的是避免默认配置随版本或环境变化，而不是把 2048 作为单独调优变量。公开的 E1–E3 已使用显式值 2048 完整重跑；E4 保留相同有效默认值下的历史结果。启动时记录 vLLM 版本、GPU 信息和完整命令，实验比较以同一配置下的新输出为准。
 
 每次改变服务配置前先停止旧的 vLLM 进程。脚本打印 vLLM 版本、GPU 信息和完整启动命令。
 

@@ -15,6 +15,7 @@ gpu_memory_utilization: 0.85（E3B 除外）
 max_num_seqs: 32（E3A 除外）
 Prefix Caching: OFF
 Chunked Prefill: ON
+max_num_batched_tokens: 2048（初始实验采用 vLLM 有效默认值；当前 E1–E3 重跑与复现脚本显式固定）
 max_model_len: 32768
 ```
 
@@ -63,7 +64,7 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 | 1028 | 1028 | 260.5 ms | 4.8 ms | 310.6 ms |
 | 2054 | 2054 | 474.6 ms | 61.3 ms | 668.0 ms |
 
-短 Prompt 阶段，TTFT 的增加主要来自 Prefill。Prompt 进一步变长后，请求占用执行资源更久，Queue 也开始增加，形成次生放大。
+短 Prompt 阶段，TTFT 的增加主要来自 Prefill。Prompt 进一步变长后，请求占用执行资源更久，Queue 也开始增加，形成次生放大。2054-token case 超过单步 2048 token budget，结果包含 Chunked Prefill 的分段调度影响，不代表单次 Prefill 的纯计算耗时。
 
 ![E2 prefill](../results/figures/e2-prefill.png)
 

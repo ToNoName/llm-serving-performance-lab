@@ -68,6 +68,8 @@ flowchart LR
 
 ## 关键实验结果
 
+项目初期的 E1–E4 运行未主动设置 `max_num_batched_tokens`，vLLM 0.22.1 在当前 Chunked Prefill 配置下采用的有效值为 2048。为避免默认值随版本或环境变化，当前复现脚本显式固定同一数值；公开的 E1–E3 已按该显式值完整重跑，E4 保留相同有效默认值下的历史结果。2048 是复现实验条件，不是单独调优得到的参数，以下结论均限定在该单步 Scheduler token budget 下。
+
 ### E2：Prompt Length 与 Prefill
 
 固定 concurrency=4，Prompt 从 137 增至 2054 tokens：
@@ -79,7 +81,7 @@ flowchart LR
 | 1028 | 260.5 ms | 4.8 ms | 310.6 ms |
 | 2054 | 474.6 ms | 61.3 ms | 668.0 ms |
 
-短 Prompt 下 TTFT 增长主要来自 Prefill；Prompt 进一步变长后，Queue 也开始放大 TTFT。
+短 Prompt 下 TTFT 增长主要来自 Prefill；Prompt 进一步变长后，Queue 也开始放大 TTFT。2054-token case 超过单步 2048 token budget，因此该点包含 Chunked Prefill 的分段调度影响，不解释为单次 Prefill 的纯计算耗时。
 
 ### E3A：Scheduler Capacity
 
