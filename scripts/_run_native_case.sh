@@ -25,10 +25,23 @@ mkdir -p "$RESULT_DIR"
 before="$RESULT_DIR/${CASE_NAME}-before.txt"
 after="$RESULT_DIR/${CASE_NAME}-after.txt"
 requests="$RESULT_DIR/${CASE_NAME}.csv"
+warmup_requests="$RESULT_DIR/${CASE_NAME}-warmup.csv"
 summary="$RESULT_DIR/${EXPERIMENT,,}-summary.csv"
 
-curl -fsS "$VLLM_URL/metrics" > "$before"
 cd "$PROJECT_ROOT"
+python -m src.benchmark.benchmark_native \
+  --experiment "${EXPERIMENT}-WARMUP" \
+  --url "$VLLM_URL/v1/chat/completions" \
+  --model qwen \
+  --tokenizer "$TOKENIZER_PATH" \
+  --input-tokens "$INPUT_TOKENS" \
+  --concurrency 1 \
+  --max-tokens "$MAX_TOKENS" \
+  --num-requests 1 \
+  --warmup 0 \
+  --output "$warmup_requests"
+
+curl -fsS "$VLLM_URL/metrics" > "$before"
 python -m src.benchmark.benchmark_native \
   --experiment "$EXPERIMENT" \
   --url "$VLLM_URL/v1/chat/completions" \
@@ -38,6 +51,7 @@ python -m src.benchmark.benchmark_native \
   --concurrency "$CONCURRENCY" \
   --max-tokens "$MAX_TOKENS" \
   --num-requests 60 \
+  --warmup 0 \
   --output "$requests"
 curl -fsS "$VLLM_URL/metrics" > "$after"
 

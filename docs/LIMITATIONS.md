@@ -1,6 +1,7 @@
 # 实验限制
 
 - E1–E3 使用非流式请求。客户端记录的是端到端延迟，TTFT、Prefill、Queue 和 TPOT 来自 vLLM 原生指标，不能把客户端端到端延迟直接表述为 TTFT。
+- 当前公开的 E1–E3 参考汇总中，每组 CSV 包含 60 个正式请求，Native Metrics 窗口还包含 1 个相同输入与输出配置的 warmup 请求，因此原生阶段均值按 61 个请求计算。当前复现脚本已将 warmup 移到 before 快照之前，使后续结果的指标计数与正式请求数一致。
 - Prometheus Histogram 的 P95 受 bucket 粒度限制。Queue 等短时阶段同时给出窗口内 `Δsum / Δcount` 均值，避免只根据粗粒度分位桶判断差异。
 - E3B 的测试范围内没有出现 preemption 或 allocation failure，因此结论仅适用于当前模型、请求形态和并发范围，不能推出更高压力下仍无 KV 容量瓶颈。
 - E4 固定发送 40 个请求，吞吐量按首个请求开始到最后一个请求结束的 request window 计算，代表该批 workload 的完成速率，不等同于长时间稳态容量。

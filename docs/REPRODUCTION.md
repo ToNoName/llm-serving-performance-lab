@@ -74,7 +74,7 @@ E4 使用 baseline profile：
 ./scripts/run_e4_decode.sh
 ```
 
-默认原始输出写入 `results/raw/`，该目录被 Git 忽略。E1–E3 每个 case 在请求前后抓取 `/metrics`，再通过 `summarize_metrics.py` 计算 Native metric 差分。
+默认原始输出写入 `results/raw/`，该目录被 Git 忽略。E1–E3 每个 case 先单独完成一次 warmup，再抓取 before 快照；正式请求关闭内部 warmup，并在完成后抓取 after 快照，最后通过 `summarize_metrics.py` 计算 Native metric 差分。这样 Native Metrics 的请求计数与正式请求 CSV 保持一致。
 
 ## 单独运行 benchmark
 
