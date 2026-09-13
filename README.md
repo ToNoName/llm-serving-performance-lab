@@ -5,8 +5,8 @@
 ## 核心成果
 
 - 使用 vLLM Native Metrics 对照 TTFT、Queue 与 Prefill 的变化，避免依赖单一端到端延迟判断瓶颈。
-- 在相同 c32 workload 下将 `max_num_seqs` 从 32 降至 8，Queue 从约 1.08 s 增至 5.43 s，验证 Scheduler admission capacity 对首 token 延迟的影响。
-- 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 仍约为 1.67 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
+- 在相同 c32 workload 下将 `max_num_seqs` 从 32 降至 8，Queue 从约 0.87 s 增至 5.44 s，验证 Scheduler admission capacity 对首 token 延迟的影响。
+- 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 均约为 1.49 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
 - 使用 AutoGPTQ、llm-compressor 与 llama-quantize 完成 Qwen2.5-7B 的 GPTQ-Int4、AWQ W4A16、GGUF Q4_K_M/Q8_0 转换与加载验证，并完成 FP16/AWQ 共 95 组、2850 请求的部署压测。
 - 使用 Docker Compose 验证 Nginx → Gateway → llama.cpp 的非流式/流式请求链路，以及 Prometheus 对 Gateway 指标的抓取、Grafana 数据源和仪表盘加载。
@@ -60,10 +60,10 @@ flowchart LR
 
 | Prompt tokens | Prefill | Queue | Native TTFT |
 |---:|---:|---:|---:|
-| 137 | 48.4 ms | 0.02 ms | 64.7 ms |
-| 515 | 159.9 ms | 0.02 ms | 180.8 ms |
-| 1028 | 279.6 ms | 19.1 ms | 326.1 ms |
-| 2054 | 482.2 ms | 104.8 ms | 672.4 ms |
+| 137 | 45.6 ms | 0.02 ms | 57.3 ms |
+| 515 | 143.1 ms | 0.02 ms | 173.0 ms |
+| 1028 | 260.5 ms | 4.8 ms | 310.6 ms |
+| 2054 | 474.6 ms | 61.3 ms | 668.0 ms |
 
 短 Prompt 下 TTFT 增长主要来自 Prefill；Prompt 进一步变长后，Queue 也开始放大 TTFT。
 
@@ -73,8 +73,8 @@ flowchart LR
 
 | `max_num_seqs` | Prefill | Queue | Native TTFT |
 |---:|---:|---:|---:|
-| 32 | 472.9 ms | 1076.6 ms | 1666.0 ms |
-| 8 | 271.6 ms | 5431.1 ms | 5808.6 ms |
+| 32 | 489.4 ms | 873.0 ms | 1492.5 ms |
+| 8 | 289.6 ms | 5440.9 ms | 5844.1 ms |
 
 TTFT 的新增部分主要累积在 Queue，而 Prefill 没有同步恶化。该结果支持 Queue-dominated TTFT 的判断。
 
@@ -84,9 +84,9 @@ TTFT 的新增部分主要累积在 Queue，而 Prefill 没有同步恶化。该
 
 | `gpu_memory_utilization` | Prefill | Queue | Native TTFT |
 |---:|---:|---:|---:|
-| 0.85 | 472.9 ms | 1076.6 ms | 1666.0 ms |
-| 0.40 | 473.5 ms | 1106.0 ms | 1668.1 ms |
-| 0.35 | 467.6 ms | 1089.9 ms | 1674.1 ms |
+| 0.85 | 489.4 ms | 873.0 ms | 1492.5 ms |
+| 0.40 | 489.3 ms | 870.0 ms | 1495.1 ms |
+| 0.35 | 489.7 ms | 872.7 ms | 1493.7 ms |
 
 显著压缩 KV budget 后，TTFT 没有出现有意义的变化，且 `preemptions_delta=0`。这个 workload 下的主要限制仍来自调度与 admission pressure。
 

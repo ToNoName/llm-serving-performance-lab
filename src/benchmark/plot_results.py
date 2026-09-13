@@ -82,8 +82,8 @@ def main() -> None:
 
     by_case = {row["case"]: row for row in native_rows}
     e3a = [
-        by_case["e1-v2-c16"], by_case["e3a-v2-c16"],
-        by_case["e1-v2-c32"], by_case["e3a-v2-c32"],
+        by_case["e1-c16"], by_case["e3a-seq8-c16"],
+        by_case["e1-c32"], by_case["e3a-seq8-c32"],
     ]
     positions = list(range(len(e3a)))
     width = 0.24
@@ -110,9 +110,9 @@ def main() -> None:
     plt.close(fig)
 
     e3b = [
-        ("0.85", by_case["e1-v2-c32"]),
-        ("0.40", by_case["e3b-v2-040-c32"]),
-        ("0.35", by_case["e3b-v2-035-c32"]),
+        ("0.85", by_case["e1-c32"]),
+        ("0.40", by_case["e3b-mem040-c32"]),
+        ("0.35", by_case["e3b-mem035-c32"]),
     ]
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
     for label, field in (

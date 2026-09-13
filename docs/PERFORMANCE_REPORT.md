@@ -42,11 +42,11 @@ E4 使用 Streaming Client 记录首个正文事件与后续 token 间隔，并�
 
 | Concurrency | Prefill avg | Queue avg | Native TTFT avg |
 |---:|---:|---:|---:|
-| 1 | 110.5 ms | 0.03 ms | 119.5 ms |
-| 4 | 272.4 ms | 22.6 ms | 326.9 ms |
-| 8 | 386.9 ms | 141.0 ms | 559.4 ms |
-| 16 | 436.4 ms | 416.0 ms | 944.4 ms |
-| 32 | 472.9 ms | 1076.6 ms | 1666.0 ms |
+| 1 | 108.4 ms | 0.02 ms | 117.8 ms |
+| 4 | 264.1 ms | 11.4 ms | 316.3 ms |
+| 8 | 366.9 ms | 95.3 ms | 537.2 ms |
+| 16 | 444.6 ms | 296.5 ms | 868.7 ms |
+| 32 | 489.4 ms | 873.0 ms | 1492.5 ms |
 
 E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身不能证明 Queue 全部由 `max_num_seqs` ceiling 导致，因此使用 E3A 进一步验证。
 
@@ -58,10 +58,10 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 
 | Prompt tokens | Prefill KV | Prefill avg | Queue avg | Native TTFT avg |
 |---:|---:|---:|---:|---:|
-| 137 | 137 | 48.4 ms | 0.02 ms | 64.7 ms |
-| 515 | 515 | 159.9 ms | 0.02 ms | 180.8 ms |
-| 1028 | 1028 | 279.6 ms | 19.1 ms | 326.1 ms |
-| 2054 | 2054 | 482.2 ms | 104.8 ms | 672.4 ms |
+| 137 | 137 | 45.6 ms | 0.02 ms | 57.3 ms |
+| 515 | 515 | 143.1 ms | 0.02 ms | 173.0 ms |
+| 1028 | 1028 | 260.5 ms | 4.8 ms | 310.6 ms |
+| 2054 | 2054 | 474.6 ms | 61.3 ms | 668.0 ms |
 
 短 Prompt 阶段，TTFT 的增加主要来自 Prefill。Prompt 进一步变长后，请求占用执行资源更久，Queue 也开始增加，形成次生放大。
 
@@ -73,10 +73,10 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 
 | Concurrency | `max_num_seqs` | Prefill avg | Queue avg | Native TTFT avg |
 |---:|---:|---:|---:|---:|
-| 16 | 32 | 436 ms | 416 ms | 944 ms |
-| 16 | 8 | 273 ms | 2081 ms | 2438 ms |
-| 32 | 32 | 473 ms | 1077 ms | 1666 ms |
-| 32 | 8 | 272 ms | 5431 ms | 5809 ms |
+| 16 | 32 | 445 ms | 297 ms | 869 ms |
+| 16 | 8 | 290 ms | 2084 ms | 2482 ms |
+| 32 | 32 | 489 ms | 873 ms | 1493 ms |
+| 32 | 8 | 290 ms | 5441 ms | 5844 ms |
 
 当请求压力超过当前 admission capacity 后，新增延迟主要进入 Queue。Prefill 没有同步恶化，因此不能把 TTFT 上升解释为 Prefill compute 变慢。
 
@@ -88,9 +88,9 @@ E1 表明并发上升同时增加 Prefill workload 与调度等待。它本身�
 
 | `gpu_memory_utilization` | Prefill avg | Queue avg | Native TTFT avg |
 |---:|---:|---:|---:|
-| 0.85 | 472.9 ms | 1076.6 ms | 1666.0 ms |
-| 0.40 | 473.5 ms | 1106.0 ms | 1668.1 ms |
-| 0.35 | 467.6 ms | 1089.9 ms | 1674.1 ms |
+| 0.85 | 489.4 ms | 873.0 ms | 1492.5 ms |
+| 0.40 | 489.3 ms | 870.0 ms | 1495.1 ms |
+| 0.35 | 489.7 ms | 872.7 ms | 1493.7 ms |
 
 虽然单独的容量验证运行观察到约 85%–90% KV Usage，但所有列入汇总的实验均为 `preemptions_delta=0`。显著削减 KV budget 也没有明显改变 TTFT。KV Usage 表示压力，不能单独证明 KV exhaustion。
 
@@ -140,10 +140,10 @@ TPOT 上升
 
 | 实验 | 公开数据 | 关键字段 | 运行脚本 |
 |---|---|---|---|
-| E1 Concurrency | `e1-e3-summary.csv` / `e1-v2-c1,c4,c8,c16,c32` | concurrency、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh` |
-| E2 Prompt Length | `e1-e3-summary.csv` / `e2-v3-128,512,1024,2048` | prompt_tokens_mean、Prefill、Queue、Native TTFT | `run_e2_prefill.sh` |
-| E3A Scheduler | `e1-e3-summary.csv` / `e1-v2-*`、`e3a-v2-*` | max_num_seqs、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh`、`run_e3a_scheduler.sh` |
-| E3B KV Capacity | `e1-e3-summary.csv` / `e3b-v2-*` | gpu_memory_utilization、Preemption、Prefill、Queue、Native TTFT | `run_e3b_kv_capacity.sh` |
+| E1 Concurrency | `e1-e3-summary.csv` / `e1-c1,c4,c8,c16,c32` | concurrency、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh` |
+| E2 Prompt Length | `e1-e3-summary.csv` / `e2-p128,p512,p1024,p2048` | prompt_tokens_mean、Prefill、Queue、Native TTFT | `run_e2_prefill.sh` |
+| E3A Scheduler | `e1-e3-summary.csv` / `e1-*`、`e3a-seq8-*` | max_num_seqs、Prefill、Queue、Native TTFT | `run_e1_concurrency.sh`、`run_e3a_scheduler.sh` |
+| E3B KV Capacity | `e1-c32`、`e3b-mem040-*`、`e3b-mem035-*` | gpu_memory_utilization、Preemption、Prefill、Queue、Native TTFT | `run_e3b_kv_capacity.sh` |
 | E4 Decode | `e4-summary.csv` | Client/Native TTFT、TPOT、request window、output throughput | `run_e4_decode.sh` |
 
 CSV 位于 [`results/`](../results/)，脚本位于 [`scripts/`](../scripts/)。时间字段统一使用毫秒；README 中以秒展示的 Queue 数值由毫秒除以 1000 并按显示精度取舍。
