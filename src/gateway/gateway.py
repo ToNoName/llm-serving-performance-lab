@@ -116,7 +116,7 @@ def log_request(
     output_tokens: int,
     stream: bool,
     status_code: int,
-    first_content_ms: Optional[float],
+    first_chunk_ms: Optional[float],
     stream_chunk_interval_ms: Optional[float],
     e2e_latency_ms: float,
     backend_latency_ms: float,
@@ -135,8 +135,8 @@ def log_request(
                 "stream": stream,
                 "status_code": status_code,
                 "error_type": error_type,
-                "first_content_ms": (
-                    round(first_content_ms, 2) if first_content_ms is not None else None
+                "first_chunk_ms": (
+                    round(first_chunk_ms, 2) if first_chunk_ms is not None else None
                 ),
                 "stream_chunk_interval_ms": (
                     round(stream_chunk_interval_ms, 2)
@@ -377,7 +377,7 @@ async def chat_completions(request: ChatCompletionRequest, req: Request):
 
         async def stream_generator():
             backend_start = time.monotonic()
-            first_token_time = None
+            first_chunk_time = None
             chunk_count = 0
 
             try:
@@ -395,8 +395,9 @@ async def chat_completions(request: ChatCompletionRequest, req: Request):
                         return
 
                     async for chunk in resp.aiter_bytes():
-                        if first_token_time is None:
-                            first_token_time = time.monotonic()
+                        # HTTP byte chunks are transport units, not model tokens.
+                        if first_chunk_time is None:
+                            first_chunk_time = time.monotonic()
                         chunk_count += 1
                         yield chunk
 
@@ -442,20 +443,20 @@ async def chat_completions(request: ChatCompletionRequest, req: Request):
             backend_latency_ms = (time.monotonic() - backend_start) * 1000
             e2e_latency_ms = (time.monotonic() - e2e_start) * 1000
 
-            first_content_ms = (
-                (first_token_time - backend_start) * 1000 if first_token_time else None
+            first_chunk_ms = (
+                (first_chunk_time - backend_start) * 1000 if first_chunk_time else None
             )
             output_tokens_est = chunk_count
             stream_chunk_interval_ms = (
-                (backend_latency_ms - first_content_ms) / (chunk_count - 1)
-                if first_content_ms is not None and chunk_count > 1
+                (backend_latency_ms - first_chunk_ms) / (chunk_count - 1)
+                if first_chunk_ms is not None and chunk_count > 1
                 else None
             )
 
             log_request(
                 trace_id, backend_name, payload["model"],
                 input_token_estimate, output_tokens_est, True,
-                200, first_content_ms, stream_chunk_interval_ms,
+                200, first_chunk_ms, stream_chunk_interval_ms,
                 e2e_latency_ms, backend_latency_ms,
             )
             REQUEST_LATENCY.observe(e2e_latency_ms / 1000)

@@ -1,6 +1,7 @@
 # 实验限制
 
 - E1–E3 使用非流式请求。客户端记录的是端到端延迟，TTFT、Prefill、Queue 和 TPOT 来自 vLLM 原生指标，不能把客户端端到端延迟直接表述为 TTFT。
+- Gateway 流式日志中的 `first_chunk_ms` 和 `stream_chunk_interval_ms` 基于 HTTP 传输块，不是 token 级 TTFT/TPOT；真实 token 指标由 Streaming Benchmark 解析 SSE 正文计算。
 - E1–E3 的公开结果来自修正计时窗口后的完整重跑：每组包含 60 个正式请求，warmup 在 before 快照之前完成，Native Metrics 的计数差分与正式请求数一致。
 - Prometheus Histogram 的 P95 受 bucket 粒度限制。Queue 等短时阶段同时给出窗口内 `Δsum / Δcount` 均值，避免只根据粗粒度分位桶判断差异。
 - E3B 的测试范围内没有出现 preemption 或 allocation failure，因此结论仅适用于当前模型、请求形态和并发范围，不能推出更高压力下仍无 KV 容量瓶颈。

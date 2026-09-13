@@ -1,6 +1,6 @@
 # LLM Serving Performance Lab
 
-面向单机 GPU 的大模型推理服务与性能诊断项目。项目以 vLLM 为主要推理引擎，使用 FastAPI Gateway、Prometheus 和 Grafana 构建服务与观测链路，并通过 E1–E4 控制变量实验分析 Prefill、Scheduler、KV Cache 与 Decode 压力。
+面向单机 GPU 的大模型推理服务与性能诊断项目。项目包含两条互补路径：使用 FastAPI Gateway、Nginx、Prometheus 和 Grafana 验证模型服务接入与观测链路；使用直连 vLLM 的 E1–E4 控制变量实验分析 Prefill、Scheduler、KV Cache 与 Decode 压力。
 
 ## 核心成果
 
@@ -9,24 +9,38 @@
 - 将 `gpu_memory_utilization` 从 0.85 降至 0.35 后，TTFT 均约为 1.49 s 且未发生 Preemption，说明当前 workload 的主导瓶颈不是 KV capacity。
 - 在固定 129-token 输入和 512-token 输出的流式实验中，concurrency 1→32 时 TPOT P50 从 5.80 ms 增至 7.31 ms，同时请求窗口输出吞吐显著增长。
 - 使用 AutoGPTQ、llm-compressor 与 llama-quantize 完成 Qwen2.5-7B 的 GPTQ-Int4、AWQ W4A16、GGUF Q4_K_M/Q8_0 转换与加载验证，并完成 FP16/AWQ 共 95 组、2850 请求的部署压测。
-- 使用 Docker Compose 验证 Nginx → Gateway → llama.cpp 的非流式/流式请求链路，以及 Prometheus 对 Gateway 指标的抓取、Grafana 数据源和仪表盘加载。
-- 在 RTX 4090D 上验证 Gateway → vLLM 非流式/流式转发、关键 Native Metrics、Prometheus 双 target 抓取，以及 Grafana 12 个面板的 PromQL 查询。
+- 分别验证 Docker Compose 下的 Nginx → Gateway → llama.cpp 链路和 RTX 4090D 上的 Gateway → vLLM 链路，并完成 Prometheus 双 target 抓取与 Grafana 12 个面板查询检查。
 - 阅读并整理 vLLM V1 Engine 的请求接入、Scheduler、KV Cache、GPU 执行与输出链路。
 
-## 系统结构
+## 架构与验证路径
 
 ```mermaid
-flowchart LR
-    C[Client] --> N[Nginx]
-    N --> G[FastAPI Gateway]
-    G --> V[vLLM]
-    G --> L[llama.cpp]
-    P[Prometheus] --> G
-    P --> V
-    D[Grafana] --> P
+flowchart TB
+    subgraph ONLINE[在线服务路径]
+        C[Client] --> N[Nginx]
+        N --> G[FastAPI Gateway]
+        G --> VS[vLLM]
+        G --> L[llama.cpp]
+    end
+
+    subgraph LAB[性能实验路径]
+        B[Async Benchmark] --> VE[vLLM under test]
+        P[Prometheus] -. scrape .-> VE
+        D[Grafana] --> P
+    end
+
+    P -. scrape .-> G
 ```
 
-Gateway 提供 OpenAI 风格的 `/v1/chat/completions` 接口、AUTO/固定后端模式、流式转发、请求级 trace ID、结构化日志和 Prometheus 指标。AUTO 模式中的 512-token 阈值用于展示路由机制，不代表生产环境的最优边界。
+在线服务路径验证模型如何通过统一入口接入业务；性能实验路径用于隔离变量并读取推理引擎原生指标。两条路径共享 vLLM 和可观测性方法，但承担不同的验证目标。
+
+### Gateway 与服务接入
+
+Gateway 提供 OpenAI 风格的 `/v1/chat/completions` 接口、vLLM/llama.cpp 模型名映射、AUTO/固定后端模式、非流式与 SSE 流式转发、HTTP 连接复用、超时与后端异常处理。它为每个请求生成 trace ID 并写入结构化日志，同时暴露请求量、请求延迟、后端选择和错误类型等 Prometheus 指标。
+
+AUTO 模式使用输入字符特征估算 token 数，并以 512-token 阈值演示路由机制，不代表生产环境的最优策略。Gateway 的流式日志记录首个传输块延迟和数据块间隔；真实 token 级 TTFT/TPOT 由 Streaming Benchmark 解析 SSE 正文计算。
+
+E1–E4 默认由 Benchmark 直连 vLLM，以避免 Gateway 转发、连接池和超时设置成为额外实验变量。Gateway 功能通过独立链路验证，不参与 E1–E4 指标归因。
 
 ### vLLM 请求处理链路
 
@@ -140,7 +154,29 @@ TTFT 的新增部分主要累积在 Queue，而 Prefill 没有同步恶化。该
 
 ## 快速开始
 
-安装 Gateway：
+### 性能实验
+
+运行 E4 示例需要 GPU 环境中已安装 vLLM 0.22.1，以及与历史实验一致的权重和 tokenizer；安装与配置边界见复现指南：
+
+```bash
+# 先激活已安装 vllm==0.22.1 的 GPU Python 环境
+pip install -r requirements/benchmark.txt
+export MODEL_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
+export TOKENIZER_PATH="$MODEL_PATH"
+./scripts/start_vllm.sh e4
+```
+
+在另一个终端运行：
+
+```bash
+# 激活同一个 GPU Python 环境
+export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
+./scripts/run_e4_decode.sh
+```
+
+完整步骤见 [实验复现指南](docs/REPRODUCTION.md)。
+
+### Gateway
 
 ```bash
 python -m venv .venv
@@ -150,22 +186,7 @@ cp .env.example .env
 ./scripts/start_gateway.sh
 ```
 
-运行 E4 示例需要 GPU 环境中已安装 vLLM 0.22.1，以及与历史实验一致的权重和 tokenizer；安装与配置边界见复现指南：
-
-```bash
-pip install -r requirements/benchmark.txt
-export MODEL_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
-./scripts/start_vllm.sh e4
-```
-
-在另一个终端：
-
-```bash
-export TOKENIZER_PATH=/absolute/path/to/Qwen2.5-7B-Instruct-AWQ-Int4
-./scripts/run_e4_decode.sh
-```
-
-完整步骤见 [实验复现指南](docs/REPRODUCTION.md)。
+### 参考 Docker Compose
 
 验证参考 Docker 编排时，先复制并修改 `.env.example`，再按显存条件选择 `vllm` 或 `llama` profile。单后端运行时将 `BACKEND_MODE` 设置成同名后端；双后端均启动时才使用 `auto`。完整命令见 [实验复现指南](docs/REPRODUCTION.md#参考-docker-compose)。
 
